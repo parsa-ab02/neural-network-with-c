@@ -20,6 +20,17 @@ double d_ReLU(double value){
     }return 1;
 }
 
+double Max(double value1 , double value2){
+    return value1 > value2 ? value1 : value2;
+}
+
+double LeakyReLU(double value , double alpha){
+    return Max(value , alpha*value);
+}
+double d_LeakyReLU(double value , double alpha){
+    return value > 0 ? 1.0 : alpha;
+}
+
 double Sigmoid(double value){
     return 1/(1+exp(-value));
 }
