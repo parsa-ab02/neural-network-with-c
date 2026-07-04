@@ -10,22 +10,14 @@ typedef struct{
 }Activation;
 
 double ReLU(double value){
-    if(value <= 0){
-        return 0;
-    }return value;
+    return value > 0 ? value : 0;
 }
 double d_ReLU(double value){
-    if(value <= 0){
-        return 0;
-    }return 1;
-}
-
-double Max(double value1 , double value2){
-    return value1 > value2 ? value1 : value2;
+    return value > 0 ? 1.0 : 0;
 }
 
 double LeakyReLU(double value , double alpha){
-    return Max(value , alpha*value);
+    return value > 0 ? value : alpha*value;
 }
 double d_LeakyReLU(double value , double alpha){
     return value > 0 ? 1.0 : alpha;
