@@ -108,6 +108,37 @@ double Binary_Cross_Entropy_Loss(const Matrix *RealOutput, const Matrix *predict
     return -result/size;
 }
 
+double Categorical_Cross_Entropy_Loss(const Matrix *RealOutput, const Matrix *predictedOutput){
+    if(RealOutput->n_rows != predictedOutput->n_rows){
+        printf("sizes do not match\n");
+        return 0.0;
+    }
+    int size = RealOutput->n_rows;
+    double result = 0;
+    for(size_t i = 0; i < size; i++){
+        for(size_t j = 0; j < RealOutput->n_cols; j++){
+            if(*At(RealOutput, i, j) == 1){
+                double p = *At(predictedOutput, i, j);
+                if(p < 0 || p > 1){
+                    printf("probabilities are invalid! it must be  between 0 to 1\n");
+                    return 0.0;
+                }
+                if (p < eps){
+                    p = eps;
+                }
+                if (p > 1.0 - eps){
+                    p = 1.0 - eps;
+                }
+
+                double error = -log(p);
+                result += error;
+                continue;
+            }
+        }
+    }
+    return result/size;
+}
+
 double Sparse_Categorical_Cross_Entropy_Loss(const Matrix *RealOutput, const Matrix *predictedOutput){
     if(RealOutput->n_cols != 1){
         printf("real output is not a vector\n");
