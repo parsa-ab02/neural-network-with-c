@@ -2,7 +2,7 @@
 #include <math.h>
 #include "matrix.h"
 
-const double eps = 1e-15;
+const float eps = 1e-7;
 
 // Linear Regression loss functions : --------------------
 
@@ -12,7 +12,7 @@ typedef struct
 }Loss;
 
 
-double Mean_Squared_Error(const Matrix *RealOutput, const Matrix *predictedOutput){
+float Mean_Squared_Error(const Matrix *RealOutput, const Matrix *predictedOutput){
     if(RealOutput->n_cols != 1 || predictedOutput->n_cols != 1){
         printf("real output or predicted output are not a vector\n");
         return 0.0;
@@ -22,17 +22,17 @@ double Mean_Squared_Error(const Matrix *RealOutput, const Matrix *predictedOutpu
         return 0.0;
     }
     int size = RealOutput->n_rows;
-    double result = 0;
+    float result = 0;
 
     for(size_t i = 0; i < size; i++){
-        double error = *At(RealOutput, i , 0)-*At(predictedOutput, i ,0);
+        float error = *At(RealOutput, i , 0)-*At(predictedOutput, i ,0);
         result += error * error;
     }
 
     return result/size;
 }
 
-double Mean_Absoult_Error(const Matrix *RealOutput, const Matrix *predictedOutput){
+float Mean_Absoult_Error(const Matrix *RealOutput, const Matrix *predictedOutput){
     if(RealOutput->n_cols != 1 || predictedOutput->n_cols != 1){
         printf("real output or predicted output are not a vector\n");
         return 0.0;
@@ -42,7 +42,7 @@ double Mean_Absoult_Error(const Matrix *RealOutput, const Matrix *predictedOutpu
         return 0.0;
     }
     int size = RealOutput->n_rows;
-    double result = 0;
+    float result = 0;
 
     for(size_t i = 0; i < size; i++){
         result += fabs(*At(RealOutput, i , 0)-*At(predictedOutput, i ,0));
@@ -51,7 +51,7 @@ double Mean_Absoult_Error(const Matrix *RealOutput, const Matrix *predictedOutpu
     return result/size;
 }
 
-double Huber_Loss(const Matrix *RealOutput, const Matrix *predictedOutput, double delta){
+float Huber_Loss(const Matrix *RealOutput, const Matrix *predictedOutput, float delta){
     if(RealOutput->n_cols != 1 || predictedOutput->n_cols != 1){
         printf("real output or predicted output are not a vector\n");
         return 0.0;
@@ -61,10 +61,10 @@ double Huber_Loss(const Matrix *RealOutput, const Matrix *predictedOutput, doubl
         return 0.0;
     }
     int size = RealOutput->n_rows;
-    double result = 0;
+    float result = 0;
 
     for(size_t i = 0; i < size; i++){
-        double error = fabs(*At(RealOutput, i , 0)-*At(predictedOutput, i ,0));
+        float error = fabs(*At(RealOutput, i , 0)-*At(predictedOutput, i ,0));
         if(error <= delta){
             result += (0.5*error * error);
         }else{
@@ -77,7 +77,7 @@ double Huber_Loss(const Matrix *RealOutput, const Matrix *predictedOutput, doubl
 
 // classification loss functions : --------------------
 
-double Binary_Cross_Entropy_Loss(const Matrix *RealOutput, const Matrix *predictedOutput){
+float Binary_Cross_Entropy_Loss(const Matrix *RealOutput, const Matrix *predictedOutput){
     if(RealOutput->n_cols != 1 || predictedOutput->n_cols != 1){
         printf("real output or predicted output are not a vector\n");
         return 0.0;
@@ -87,10 +87,10 @@ double Binary_Cross_Entropy_Loss(const Matrix *RealOutput, const Matrix *predict
         return 0.0;
     }
     int size = RealOutput->n_rows;
-    double result = 0;
+    float result = 0;
 
     for(size_t i = 0; i < size; i++){
-        double p = *At(predictedOutput, i, 0);
+        float p = *At(predictedOutput, i, 0);
         if(p < 0 || p > 1){
             printf("probabilities are invalid! it must be  between 0 to 1\n");
             return 0.0;
@@ -101,24 +101,24 @@ double Binary_Cross_Entropy_Loss(const Matrix *RealOutput, const Matrix *predict
         if (p > 1.0 - eps){
             p = 1.0 - eps;
         }
-        double error = *At(RealOutput, i , 0) * log(p) + (1 - *At(RealOutput, i , 0)) * log(1 - p);
+        float error = *At(RealOutput, i , 0) * log(p) + (1 - *At(RealOutput, i , 0)) * log(1 - p);
         result += error;
     }
 
     return -result/size;
 }
 
-double Categorical_Cross_Entropy_Loss(const Matrix *RealOutput, const Matrix *predictedOutput){
+float Categorical_Cross_Entropy_Loss(const Matrix *RealOutput, const Matrix *predictedOutput){
     if(RealOutput->n_rows != predictedOutput->n_rows){
         printf("sizes do not match\n");
         return 0.0;
     }
     int size = RealOutput->n_rows;
-    double result = 0;
+    float result = 0;
     for(size_t i = 0; i < size; i++){
         for(size_t j = 0; j < RealOutput->n_cols; j++){
             if(*At(RealOutput, i, j) == 1){
-                double p = *At(predictedOutput, i, j);
+                float p = *At(predictedOutput, i, j);
                 if(p < 0 || p > 1){
                     printf("probabilities are invalid! it must be  between 0 to 1\n");
                     return 0.0;
@@ -130,7 +130,7 @@ double Categorical_Cross_Entropy_Loss(const Matrix *RealOutput, const Matrix *pr
                     p = 1.0 - eps;
                 }
 
-                double error = -log(p);
+                float error = -log(p);
                 result += error;
                 continue;
             }
@@ -139,7 +139,7 @@ double Categorical_Cross_Entropy_Loss(const Matrix *RealOutput, const Matrix *pr
     return result/size;
 }
 
-double Sparse_Categorical_Cross_Entropy_Loss(const Matrix *RealOutput, const Matrix *predictedOutput){
+float Sparse_Categorical_Cross_Entropy_Loss(const Matrix *RealOutput, const Matrix *predictedOutput){
     if(RealOutput->n_cols != 1){
         printf("real output is not a vector\n");
         return 0.0;
@@ -149,7 +149,7 @@ double Sparse_Categorical_Cross_Entropy_Loss(const Matrix *RealOutput, const Mat
         return 0.0;
     }
     int size = RealOutput->n_rows;
-    double result = 0;
+    float result = 0;
 
     for(size_t i = 0; i < size; i++){
         int index = (int)*At(RealOutput, i, 0);
@@ -162,7 +162,7 @@ double Sparse_Categorical_Cross_Entropy_Loss(const Matrix *RealOutput, const Mat
             return 0.0;
         }
 
-        double p = *At(predictedOutput, i, index);
+        float p = *At(predictedOutput, i, index);
         if(p < 0 || p > 1){
             printf("probabilities are invalid! it must be  between 0 to 1\n");
             return 0.0;
@@ -174,7 +174,7 @@ double Sparse_Categorical_Cross_Entropy_Loss(const Matrix *RealOutput, const Mat
             p = 1.0 - eps;
         }
 
-        double error = -log(p);
+        float error = -log(p);
         result += error;
     }
 
