@@ -5,40 +5,40 @@
 #define ACTIVATION_H
 
 typedef struct{
-    double (*f)(double);
-    double (*d_f)(double);
+    float (*f)(float);
+    float (*d_f)(float);
 }Activation;
 
-double ReLU(double value){
+float ReLU(float value){
     return value > 0 ? value : 0;
 }
-double d_ReLU(double value){
+float d_ReLU(float value){
     return value > 0 ? 1.0 : 0;
 }
 
-double LeakyReLU(double value , double alpha){
+float LeakyReLU(float value , float alpha){
     return value > 0 ? value : alpha*value;
 }
-double d_LeakyReLU(double value , double alpha){
+float d_LeakyReLU(float value , float alpha){
     return value > 0 ? 1.0 : alpha;
 }
 
-double Sigmoid(double value){
+float Sigmoid(float value){
     return 1/(1+exp(-value));
 }
-double d_Sigmoid(double value){
-    double s = Sigmoid(value);
+float d_Sigmoid(float value){
+    float s = Sigmoid(value);
     return s*(1-s);
 }
 
-double Tanh(double value){
+float Tanh(float value){
     return tanh(value);
 }
-double d_Tanh(double value){
+float d_Tanh(float value){
     return 1 - pow(tanh(value), 2);
 }
 
-void Matrix_Activation(const Matrix *mat, Matrix *result, double (*f)(double)){
+void Matrix_Activation(const Matrix *mat, Matrix *result, float (*f)(float)){
     for(size_t i = 0; i < mat->n_rows; i++){
         for(size_t j = 0; j < mat->n_cols; j++){
             *At(result, i, j) = f(*At(mat, i, j));
@@ -50,16 +50,16 @@ void softmax(const Matrix *mat, Matrix *result){
     if(result->n_rows != mat->n_rows || result->n_cols != 1){
         return;
     }
-    double max = *At(mat, 0 , 0);
+    float max = *At(mat, 0 , 0);
     for(size_t i = 0; i < mat->n_rows; i++){
         if(*At(mat, i , 0) > max){
         max = *At(mat, i , 0);
         }
     }
 
-    double sum = 0;
+    float sum = 0;
     for(size_t i = 0; i < mat->n_rows; i++){
-        double temp = exp(*At(mat,i,0) - max);
+        float temp = exp(*At(mat,i,0) - max);
         *At(result, i, 0) = temp;
         sum += temp;
         
@@ -75,9 +75,9 @@ void d_Softmax(const Matrix *softmax_matrix, Matrix *result){
     return;
 }
     for(size_t i = 0; i < softmax_matrix->n_rows; i++){
-        double si = *At(softmax_matrix, i, 0);
+        float si = *At(softmax_matrix, i, 0);
         for(size_t j = 0; j < softmax_matrix->n_rows; j++){
-            double sj = *At(softmax_matrix, j, 0);
+            float sj = *At(softmax_matrix, j, 0);
             if(i == j){
                 *At(result, i, j) = si * (1 - si);
             }else{

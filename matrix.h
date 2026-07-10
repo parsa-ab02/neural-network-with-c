@@ -7,7 +7,7 @@ typedef struct{
     int n_rows;
     int n_cols;
     int capacity;
-    double *Data;
+    float *Data;
 }Matrix;
 
 Matrix Null_Matrix(){
@@ -28,7 +28,7 @@ Matrix New_Matrix(int n_rows , int n_cols){
     mat.n_rows = n_rows;
     mat.n_cols = n_cols;
     mat.capacity = n_rows*n_cols;
-    mat.Data = malloc(mat.capacity * sizeof(double));
+    mat.Data = malloc(mat.capacity * sizeof(float));
 
     if(mat.Data == NULL){
         return Null_Matrix();
@@ -41,7 +41,7 @@ void destroy(Matrix *mat){
     *mat = Null_Matrix();
 }
 
-double *At(Matrix *mat, int i, int j){
+float *At(Matrix *mat, int i, int j){
     return &mat->Data[i*mat->n_cols+j];
 }
 
@@ -57,7 +57,7 @@ void Multiplication(const Matrix *mat1, const Matrix *mat2, Matrix *result){
 
     for (size_t i = 0; i < mat1->n_rows; i++){
         for (size_t j = 0; j < mat2->n_cols; j++){
-            double sum = 0;
+            float sum = 0;
             for (size_t k = 0; k < mat1->n_cols; k++)
             {
                 sum += (*At(mat1 , i , k)) * (*At(mat2 , k , j));
