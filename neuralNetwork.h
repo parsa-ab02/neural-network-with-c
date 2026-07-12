@@ -15,8 +15,6 @@ typedef struct{
     Matrix *Pre_Activations;
     Matrix *Activations;
     Matrix *Delta_Errors;
-
-    Activation *Activation_functions;
 }Neural_Network;
 
 void Set_Random_Weights(Matrix *mat){
@@ -27,7 +25,7 @@ void Set_Random_Weights(Matrix *mat){
     }
 }
 
-Neural_Network New_Neural_Nework(int n_layers, int *Components, Activation *Activation_functions){
+Neural_Network New_Neural_Nework(int n_layers, int *Components){
     Neural_Network network;
 
     network.n_layers = n_layers;
@@ -40,19 +38,17 @@ Neural_Network New_Neural_Nework(int n_layers, int *Components, Activation *Acti
     network.Activations = malloc(n_layers * sizeof(Matrix));
     network.Delta_Errors = malloc(n_layers * sizeof(Matrix));
 
-    network.Activation_functions = Activation_functions;
-
     for(size_t i = 1; i < network.n_layers; i++){
         network.Layers_Weight[i] = New_Matrix(network.Components[i], network.Components[i-1]);
         network.Layers_Bias[i] = New_Matrix(network.Components[i], 1);
 
         network.Pre_Activations[i] = New_Matrix(network.Components[i], 1);
         network.Activations[i] = New_Matrix(network.Components[i], 1);
-        if(network.Activation_functions[i].f != softmax){
-            network.Delta_Errors[i] = New_Matrix(network.Components[i], 1);
-        }else{
-            network.Delta_Errors[i] = New_Matrix(network.Components[i], network.Components[i]);
-        }
+        // if(network.activation != softmax){
+        //     network.Delta_Errors[i] = New_Matrix(network.Components[i], 1);
+        // }else{
+        //     network.Delta_Errors[i] = New_Matrix(network.Components[i], network.Components[i]);
+        // }
 
         Set_Random_Weights(&network.Layers_Weight[i]);
         Set_Random_Weights(&network.Layers_Bias[i]);
@@ -82,8 +78,6 @@ void Destroy_network(Neural_Network *network){
     network->n_layers = 0;
 
     free(network->Components);
-    free(network->Activation_functions);
-    network->Activation_functions = NULL;
 }
 
 int Largest_Component(const Neural_Network *network){
@@ -106,11 +100,11 @@ void Forward_Propagation(const Neural_Network *network,Matrix *matrix){
     for(size_t i = 1; i < network->n_layers; i++){
         Linear_Transformation(&network->Pre_Activations[i-1], &network->Pre_Activations[i], &network->Layers_Weight[i], &network->Layers_Bias[i]);
 
-        if(network->Activation_functions[i].f != softmax){
-            Matrix_Activation(&network->Pre_Activations[i], &network->Activations[i], network->Activation_functions->f);
-        }else{
-            softmax(&network->Pre_Activations[i], &network->Activations[i]);
-        }
+        // if(network->Activation_functions[i].f != softmax){
+        //     Matrix_Activation(&network->Pre_Activations[i], &network->Activations[i], network->Activation_functions->f);
+        // }else{
+        //     softmax(&network->Pre_Activations[i], &network->Activations[i]);
+        // }
     }
     return;
 }

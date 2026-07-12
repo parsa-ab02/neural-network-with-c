@@ -4,10 +4,23 @@
 #ifndef ACTIVATION_H
 #define ACTIVATION_H
 
+typedef enum{
+    ReLU,
+    LeakyReLU,
+    Sigmoid,
+    Tanh,
+    softmax
+}Type;
+
 typedef struct{
-    float (*f)(float);
-    float (*d_f)(float);
+    Type type;
+
+
 }Activation;
+
+Type TypeOf(Activation *a){
+    return a->type;
+}
 
 float ReLU(float value){
     return value > 0 ? value : 0;
@@ -86,25 +99,5 @@ void d_Softmax(const Matrix *softmax_matrix, Matrix *result){
         }
     }
 }
-
-Activation ReLU_Activation = {
-    .f = ReLU,
-    .d_f = d_ReLU
-};
-
-Activation Sigmoid_Activation = {
-    .f = Sigmoid,
-    .d_f = d_Sigmoid
-};
-
-Activation Tanh_Activation = {
-    .f = Tanh,
-    .d_f = d_Tanh
-};
-
-Activation softmax_Activation = {
-    .f = softmax,
-    .d_f = d_Softmax
-};
 
 #endif
