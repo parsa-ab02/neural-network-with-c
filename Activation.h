@@ -5,21 +5,49 @@
 #define ACTIVATION_H
 
 typedef enum{
-    ReLU,
-    LeakyReLU,
-    Sigmoid,
-    Tanh,
-    softmax
+    ACTIVATION_ReLU,
+    ACTIVATION_LeakyReLU,
+    ACTIVATION_Sigmoid,
+    ACTIVATION_Tanh,
+    ACTIVATION_softmax
 }Type;
+
+typedef void (*Activation_function)(const Matrix *mat, Matrix *result, float *Parameters);
 
 typedef struct{
     Type type;
 
+    Activation_function f;
+    Activation_function d_f;
 
+    int n_parameters;
+    float *Parameters;
 }Activation;
 
 Type TypeOf(Activation *a){
     return a->type;
+}
+
+Activation New_Activation(Type type, float *Parameters, int n_parameters){
+    Activation result;
+    result.type = type;
+    if(type == ACTIVATION_ReLU){
+        result.f = Matrix_Activation_ReLU;
+        result.d_f = Matrix_Activation_d_ReLU;
+        result.n_parameters = 0;
+        result.Parameters = NULL;
+
+        return result;
+    }
+    //rest of functions
+}
+
+void Matrix_Activation(const Matrix *mat, Matrix *result, float (*f)(float)){
+    for(size_t i = 0; i < mat->n_rows; i++){
+        for(size_t j = 0; j < mat->n_cols; j++){
+            *At(result, i, j) = f(*At(mat, i, j));
+        }
+    }
 }
 
 float ReLU(float value){
@@ -28,12 +56,28 @@ float ReLU(float value){
 float d_ReLU(float value){
     return value > 0 ? 1.0 : 0;
 }
+void Matrix_Activation_ReLU(const Matrix *mat, Matrix *result, float *Parameters){
+    (void)Parameters;
+    Matrix_Activation(mat, result, ReLU);
+}
+void Matrix_Activation_d_ReLU(const Matrix *mat, Matrix *result, float *Parameters){
+    (void)Parameters;
+    Matrix_Activation(mat, result, d_ReLU);
+}
 
 float LeakyReLU(float value , float alpha){
     return value > 0 ? value : alpha*value;
 }
 float d_LeakyReLU(float value , float alpha){
     return value > 0 ? 1.0 : alpha;
+}
+void Matrix_Activation_LeakyReLU(const Matrix *mat, Matrix *result, float *Parameters){
+    (void)Parameters;
+    Matrix_Activation(mat, result, ReLU);
+}
+void Matrix_Activation_d_LeakyReLU(const Matrix *mat, Matrix *result, float *Parameters){
+    (void)Parameters;
+    Matrix_Activation(mat, result, ReLU);
 }
 
 float Sigmoid(float value){
@@ -49,14 +93,6 @@ float Tanh(float value){
 }
 float d_Tanh(float value){
     return 1 - pow(tanh(value), 2);
-}
-
-void Matrix_Activation(const Matrix *mat, Matrix *result, float (*f)(float)){
-    for(size_t i = 0; i < mat->n_rows; i++){
-        for(size_t j = 0; j < mat->n_cols; j++){
-            *At(result, i, j) = f(*At(mat, i, j));
-        }
-    }
 }
 
 void softmax(const Matrix *mat, Matrix *result){
