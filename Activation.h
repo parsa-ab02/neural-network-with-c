@@ -32,52 +32,55 @@ Activation New_Activation(Type type, float *Parameters, int n_parameters){
     Activation result;
     result.type = type;
     if(type == ACTIVATION_ReLU){
-        result.f = Matrix_Activation_ReLU;
-        result.d_f = Matrix_Activation_d_ReLU;
+        result.f = ReLU;
+        result.d_f = d_ReLU;
         result.n_parameters = 0;
         result.Parameters = NULL;
 
         return result;
     }
-    //rest of functions
+    if(type == ACTIVATION_LeakyReLU){
+        result.f = Leaky_ReLU;
+        result.d_f = d_Leaky_ReLU;
+        result.n_parameters = 0;
+        result.Parameters = Parameters;
+
+        return result;
+    }
 }
 
-void Matrix_Activation(const Matrix *mat, Matrix *result, float (*f)(float)){
+void ReLU(const Matrix *mat, Matrix *result, float *Parameters){
+    (void)Parameters;
     for(size_t i = 0; i < mat->n_rows; i++){
         for(size_t j = 0; j < mat->n_cols; j++){
-            *At(result, i, j) = f(*At(mat, i, j));
+            *At(result, i, j) = (*At(mat, i, j)) > 0 ? (*At(mat, i, j)) : 0;
+        }
+    }
+}
+void d_ReLU(const Matrix *mat, Matrix *result, float *Parameters){
+    (void)Parameters;
+    for(size_t i = 0; i < mat->n_rows; i++){
+        for(size_t j = 0; j < mat->n_cols; j++){
+            *At(result, i, j) = (*At(mat, i, j)) > 0 ? 1 : 0;
         }
     }
 }
 
-float ReLU(float value){
-    return value > 0 ? value : 0;
+void Leaky_ReLU(const Matrix *mat, Matrix *result, float *Parameters){
+    float Alpha = Parameters[0];
+    for(size_t i = 0; i < mat->n_rows; i++){
+        for(size_t j = 0; j < mat->n_cols; j++){
+            *At(result, i, j) = (*At(mat, i, j)) > 0 ? (*At(mat, i, j)) : (*At(mat, i, j))*Alpha;
+        }
+    }
 }
-float d_ReLU(float value){
-    return value > 0 ? 1.0 : 0;
-}
-void Matrix_Activation_ReLU(const Matrix *mat, Matrix *result, float *Parameters){
-    (void)Parameters;
-    Matrix_Activation(mat, result, ReLU);
-}
-void Matrix_Activation_d_ReLU(const Matrix *mat, Matrix *result, float *Parameters){
-    (void)Parameters;
-    Matrix_Activation(mat, result, d_ReLU);
-}
-
-float LeakyReLU(float value , float alpha){
-    return value > 0 ? value : alpha*value;
-}
-float d_LeakyReLU(float value , float alpha){
-    return value > 0 ? 1.0 : alpha;
-}
-void Matrix_Activation_LeakyReLU(const Matrix *mat, Matrix *result, float *Parameters){
-    (void)Parameters;
-    Matrix_Activation(mat, result, ReLU);
-}
-void Matrix_Activation_d_LeakyReLU(const Matrix *mat, Matrix *result, float *Parameters){
-    (void)Parameters;
-    Matrix_Activation(mat, result, ReLU);
+void d_Leaky_ReLU(const Matrix *mat, Matrix *result, float *Parameters){
+    float Alpha = Parameters[0];
+    for(size_t i = 0; i < mat->n_rows; i++){
+        for(size_t j = 0; j < mat->n_cols; j++){
+            *At(result, i, j) = (*At(mat, i, j)) > 0 ? 1 : Alpha;
+        }
+    }
 }
 
 float Sigmoid(float value){
