@@ -47,6 +47,30 @@ Activation New_Activation(Type type, float *Parameters, int n_parameters){
 
         return result;
     }
+    if(type == ACTIVATION_Sigmoid){
+        result.f = Sigmoid;
+        result.d_f = d_Sigmoid;
+        result.n_parameters = 0;
+        result.Parameters = NULL;
+
+        return result;
+    }
+    if(type == ACTIVATION_Tanh){
+        result.f = ReLU;
+        result.d_f = d_ReLU;
+        result.n_parameters = 0;
+        result.Parameters = NULL;
+
+        return result;
+    }
+    if(type == ACTIVATION_softmax){
+        result.f = ReLU;
+        result.d_f = d_ReLU;
+        result.n_parameters = 0;
+        result.Parameters = NULL;
+
+        return result;
+    }
 }
 
 void ReLU(const Matrix *mat, Matrix *result, float *Parameters){
@@ -83,22 +107,46 @@ void d_Leaky_ReLU(const Matrix *mat, Matrix *result, float *Parameters){
     }
 }
 
-float Sigmoid(float value){
-    return 1/(1+exp(-value));
+void Sigmoid(const Matrix *mat, Matrix *result, float *Parameters){
+    (void)Parameters;
+    for(size_t i = 0; i < mat->n_rows; i++){
+        for(size_t j = 0; j < mat->n_cols; j++){
+            float value = *At(result, i, j);
+            *At(result, i, j) = 1/(1+exp(-value));
+        }
+    }
 }
-float d_Sigmoid(float value){
-    float s = Sigmoid(value);
-    return s*(1-s);
+void d_Sigmoid(const Matrix *mat, Matrix *result, float *Parameters){
+    (void)Parameters;
+    for(size_t i = 0; i < mat->n_rows; i++){
+        for(size_t j = 0; j < mat->n_cols; j++){
+            float value = *At(result, i, j);
+            value = 1/(1+exp(-value));
+            *At(result, i, j) = value*(1-value);
+        }
+    }
 }
 
-float Tanh(float value){
-    return tanh(value);
+void Tanh(const Matrix *mat, Matrix *result, float *Parameters){
+    (void)Parameters;
+    for(size_t i = 0; i < mat->n_rows; i++){
+        for(size_t j = 0; j < mat->n_cols; j++){
+            *At(result, i, j) = tanh(*At(result, i, j));
+        }
+    }
 }
-float d_Tanh(float value){
-    return 1 - pow(tanh(value), 2);
+void d_Tanh(const Matrix *mat, Matrix *result, float *Parameters){
+    (void)Parameters;
+    for(size_t i = 0; i < mat->n_rows; i++){
+        for(size_t j = 0; j < mat->n_cols; j++){
+            float value = tanh(*At(result, i, j));
+            *At(result, i, j) = 1 - (value*value);
+        }
+    }
 }
 
-void softmax(const Matrix *mat, Matrix *result){
+void softmax(const Matrix *mat, Matrix *result, float *Parameters){
+    (void)Parameters;
     if(result->n_rows != mat->n_rows || result->n_cols != 1){
         return;
     }
@@ -122,14 +170,15 @@ void softmax(const Matrix *mat, Matrix *result){
     }
     return;
 }
-void d_Softmax(const Matrix *softmax_matrix, Matrix *result){
-    if(result->n_rows != softmax_matrix->n_rows || result->n_cols != softmax_matrix->n_rows){
-    return;
-}
-    for(size_t i = 0; i < softmax_matrix->n_rows; i++){
-        float si = *At(softmax_matrix, i, 0);
-        for(size_t j = 0; j < softmax_matrix->n_rows; j++){
-            float sj = *At(softmax_matrix, j, 0);
+void d_Softmax(const Matrix *mat, Matrix *result, float *Parameters){
+    (void)Parameters;
+    if(result->n_rows != mat->n_rows || result->n_cols != mat->n_rows){
+        return;
+    }
+    for(size_t i = 0; i < mat->n_rows; i++){
+        float si = *At(mat, i, 0);
+        for(size_t j = 0; j < mat->n_rows; j++){
+            float sj = *At(mat, j, 0);
             if(i == j){
                 *At(result, i, j) = si * (1 - si);
             }else{
