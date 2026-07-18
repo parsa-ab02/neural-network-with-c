@@ -10,31 +10,31 @@ typedef enum{
     ACTIVATION_Sigmoid,
     ACTIVATION_Tanh,
     ACTIVATION_softmax
-}Type;
+}Activation_Type;
 
 typedef void (*Activation_function)(const Matrix *mat, Matrix *result, float *Parameters);
 
 typedef struct{
-    Type type;
+    Activation_Type type;
 
     Activation_function f;
     Activation_function d_f;
 
-    int n_parameters;
+    int n_Parameters;
     float *Parameters;
 }Activation;
 
-Type TypeOf(Activation *a){
+Activation_Type Activation_TypeOf(Activation *a){
     return a->type;
 }
 
-Activation New_Activation(Type type, float *Parameters, int n_parameters){
+Activation New_Activation(Activation_Type type, float *Parameters, int n_Parameters){
     Activation result;
     result.type = type;
     if(type == ACTIVATION_ReLU){
         result.f = ReLU;
         result.d_f = d_ReLU;
-        result.n_parameters = 0;
+        result.n_Parameters = 0;
         result.Parameters = NULL;
 
         return result;
@@ -42,7 +42,7 @@ Activation New_Activation(Type type, float *Parameters, int n_parameters){
     if(type == ACTIVATION_LeakyReLU){
         result.f = Leaky_ReLU;
         result.d_f = d_Leaky_ReLU;
-        result.n_parameters = 0;
+        result.n_Parameters = 0;
         result.Parameters = Parameters;
 
         return result;
@@ -50,7 +50,7 @@ Activation New_Activation(Type type, float *Parameters, int n_parameters){
     if(type == ACTIVATION_Sigmoid){
         result.f = Sigmoid;
         result.d_f = d_Sigmoid;
-        result.n_parameters = 0;
+        result.n_Parameters = 0;
         result.Parameters = NULL;
 
         return result;
@@ -58,7 +58,7 @@ Activation New_Activation(Type type, float *Parameters, int n_parameters){
     if(type == ACTIVATION_Tanh){
         result.f = ReLU;
         result.d_f = d_ReLU;
-        result.n_parameters = 0;
+        result.n_Parameters = 0;
         result.Parameters = NULL;
 
         return result;
@@ -66,7 +66,7 @@ Activation New_Activation(Type type, float *Parameters, int n_parameters){
     if(type == ACTIVATION_softmax){
         result.f = ReLU;
         result.d_f = d_ReLU;
-        result.n_parameters = 0;
+        result.n_Parameters = 0;
         result.Parameters = NULL;
 
         return result;
