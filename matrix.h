@@ -19,8 +19,8 @@ Matrix Null_Matrix(){
     return mat;
 }
 
-int Is_Null_Matrix(Matrix mat){
-    return mat.n_rows == 0 && mat.n_cols == 0 && mat.capacity == 0 && mat.Data == NULL;
+int Is_Null_Matrix(const Matrix *mat){
+    return mat->n_rows == 0 && mat->n_cols == 0 && mat->capacity == 0 && mat->Data == NULL;
 }
 
 Matrix New_Matrix(int n_rows , int n_cols){
@@ -43,6 +43,13 @@ void destroy(Matrix *mat){
 
 float *At(Matrix *mat, int i, int j){
     return &mat->Data[i*mat->n_cols+j];
+}
+
+int matrix_same_dimensions(const Matrix *A, const Matrix *B){
+    return A->n_rows == B->n_rows && A->n_cols == B->n_cols;
+}
+int matrix_is_vector(const Matrix *A){
+    return A->n_cols == 1;
 }
 
 void Multiplication(const Matrix *mat1, const Matrix *mat2, Matrix *result){

@@ -6,21 +6,53 @@ const float eps = 1e-7;
 
 // Linear Regression loss functions : --------------------
 
+typedef enum{
+    LOSS_MSE,
+    LOSS_MAE,
+    LOSS_HuberLoss,
+    LOSS_BCE,
+    LOSS_CCE,
+    LOSS_SCCE
+}Loss_Type;
+
+typedef float (*Loss_function)(const Matrix *RealOutput, const Matrix *predictedOutput, float *Parameters);
+typedef void (*Gradient_Loss_function)(const Matrix *RealOutput, const Matrix *predictedOutput, Matrix *result, float *Parameters);
+
 typedef struct
 {
-    
+    Loss_Type type;
+
+    Loss_function f;
+    Gradient_Loss_function d_f;
+
+    int n_Parameters;
+    float *Parameters;
 }Loss;
 
+Loss_Type Activation_TypeOf(Loss *a){
+    return a->type;
+}
 
-float Mean_Squared_Error(const Matrix *RealOutput, const Matrix *predictedOutput){
-    if(RealOutput->n_cols != 1 || predictedOutput->n_cols != 1){
-        printf("real output or predicted output are not a vector\n");
-        return 0.0;
+Loss New_Loss(Loss_Type type, float *Parameters, int n_Parameters){
+    Loss result;
+    result.type = type;
+    if(type == LOSS_MSE){
+        result.f = Mean_Squared_Error;
+        result.d_f = d_Mean_Squared_Error;
+        result.n_Parameters = 0;
+        result.Parameters = NULL;
+
+        return result;
     }
-    if(RealOutput->n_rows != predictedOutput->n_rows){
-        printf("real output and predicted out put are not the same size\n");
-        return 0.0;
-    }
+}
+
+float Mean_Squared_Error(const Matrix *RealOutput, const Matrix *predictedOutput, float *Parameters){
+    if(Is_Null_Matrix(RealOutput) || Is_Null_Matrix(predictedOutput))return 0.0;
+    if(!matrix_same_dimensions(RealOutput, predictedOutput))return 0.0;
+    if(!matrix_is_vector(RealOutput))return 0.0;
+
+    (void)Parameters;
+
     int size = RealOutput->n_rows;
     float result = 0;
 
@@ -30,6 +62,22 @@ float Mean_Squared_Error(const Matrix *RealOutput, const Matrix *predictedOutput
     }
 
     return result/size;
+}
+void d_Mean_Squared_Error(const Matrix *RealOutput, const Matrix *predictedOutput, Matrix *result, float *Parameters){
+    if(Is_Null_Matrix(RealOutput) || Is_Null_Matrix(predictedOutput) || Is_Null_Matrix(result))return;
+    if(!matrix_same_dimensions(RealOutput, predictedOutput) || !matrix_same_dimensions(RealOutput, result))return;
+    if(!matrix_is_vector(RealOutput))return;
+
+    (void)Parameters;
+
+    int size = RealOutput->n_rows;
+
+    for(size_t i = 0; i < size; i++){
+        float error = *At(RealOutput, i , 0)-*At(predictedOutput, i ,0);
+        *At(result, i, 0) = 2*error/size;
+    }
+
+    return;
 }
 
 float Mean_Absoult_Error(const Matrix *RealOutput, const Matrix *predictedOutput){
