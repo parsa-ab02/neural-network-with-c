@@ -4,8 +4,6 @@
 
 const float eps = 1e-7;
 
-// Linear Regression loss functions : --------------------
-
 typedef enum{
     LOSS_MSE,
     LOSS_MAE,
@@ -39,6 +37,46 @@ Loss New_Loss(Loss_Type type, float *Parameters, int n_Parameters){
     if(type == LOSS_MSE){
         result.f = Mean_Squared_Error;
         result.d_f = d_Mean_Squared_Error;
+        result.n_Parameters = 0;
+        result.Parameters = NULL;
+
+        return result;
+    }
+    if(type == LOSS_MAE){
+        result.f = Mean_Absoult_Error;
+        result.d_f = d_Mean_Absoult_Error;
+        result.n_Parameters = 0;
+        result.Parameters = NULL;
+
+        return result;
+    }
+    if(type == LOSS_HuberLoss){
+        result.f = Huber_Loss;
+        result.d_f = d_Huber_Loss;
+        result.n_Parameters = 1;
+        result.Parameters = Parameters;
+
+        return result;
+    }
+    if(type == LOSS_BCE){
+        result.f = Binary_Cross_Entropy_Loss;
+        result.d_f = d_Binary_Cross_Entropy_Loss;
+        result.n_Parameters = 0;
+        result.Parameters = NULL;
+
+        return result;
+    }
+    if(type == LOSS_CCE){
+        result.f = Categorical_Cross_Entropy_Loss;
+        result.d_f = d_Categorical_Cross_Entropy_Loss;
+        result.n_Parameters = 0;
+        result.Parameters = NULL;
+
+        return result;
+    }
+    if(type == LOSS_SCCE){
+        result.f = Sparse_Categorical_Cross_Entropy_Loss;
+        result.d_f = d_Sparse_Categorical_Cross_Entropy_Loss;
         result.n_Parameters = 0;
         result.Parameters = NULL;
 
@@ -147,8 +185,6 @@ void d_Huber_Loss(const Matrix *RealOutput, const Matrix *predictedOutput, Matri
 
     return;
 }
-
-// classification loss functions : --------------------
 
 float Binary_Cross_Entropy_Loss(const Matrix *RealOutput, const Matrix *predictedOutput, float *Parameters){
     if(Is_Null_Matrix(RealOutput) || Is_Null_Matrix(predictedOutput))return 0.0;
