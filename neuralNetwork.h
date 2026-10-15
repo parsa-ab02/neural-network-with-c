@@ -88,8 +88,8 @@ int Largest_Component(const Neural_Network *network){
     return Max;
 }
 
-void Linear_Transformation(const Matrix *matrix, Matrix *Output, const Matrix *Weights, const Matrix *Bias){
-    Multiplication(Weights, matrix, Output);
+void Linear_Transformation(const Matrix *Input, Matrix *Output, const Matrix *Weights, const Matrix *Bias){
+    Multiplication(Weights, Input, Output);
     Addition(Output, Bias, Output);
     return;
 }
@@ -98,7 +98,12 @@ void Forward_Propagation(const Neural_Network *network,Matrix *matrix){
     network->Pre_Activations[0] = *matrix;
 
     for(size_t i = 1; i < network->n_layers; i++){
-        Linear_Transformation(&network->Pre_Activations[i-1], &network->Pre_Activations[i], &network->Layers_Weight[i], &network->Layers_Bias[i]);
+        Linear_Transformation(
+            &network->Pre_Activations[i-1],
+            &network->Pre_Activations[i],
+            &network->Layers_Weight[i],
+            &network->Layers_Bias[i]
+        );
 
         // if(network->Activation_functions[i].f != softmax){
         //     Matrix_Activation(&network->Pre_Activations[i], &network->Activations[i], network->Activation_functions->f);

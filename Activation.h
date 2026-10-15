@@ -4,6 +4,21 @@
 #ifndef ACTIVATION_H
 #define ACTIVATION_H
 
+// activtion functions prototype
+
+void ReLU(const Matrix *mat, Matrix *result, float *Parameters);
+void d_ReLU(const Matrix *mat, Matrix *result, float *Parameters);
+void Leaky_ReLU(const Matrix *mat, Matrix *result, float *Parameters);
+void d_Leaky_ReLU(const Matrix *mat, Matrix *result, float *Parameters);
+void Sigmoid(const Matrix *mat, Matrix *result, float *Parameters);
+void d_Sigmoid(const Matrix *mat, Matrix *result, float *Parameters);
+void Tanh(const Matrix *mat, Matrix *result, float *Parameters);
+void d_Tanh(const Matrix *mat, Matrix *result, float *Parameters);
+void softmax(const Matrix *mat, Matrix *result, float *Parameters);
+void d_Softmax(const Matrix *mat, Matrix *result, float *Parameters);
+
+// activation functions prototype
+
 typedef enum{
     ACTIVATION_ReLU,
     ACTIVATION_LeakyReLU,
@@ -42,7 +57,7 @@ Activation New_Activation(Activation_Type type, float *Parameters, int n_Paramet
     if(type == ACTIVATION_LeakyReLU){
         result.f = Leaky_ReLU;
         result.d_f = d_Leaky_ReLU;
-        result.n_Parameters = 0;
+        result.n_Parameters = 1;
         result.Parameters = Parameters;
 
         return result;
@@ -56,16 +71,16 @@ Activation New_Activation(Activation_Type type, float *Parameters, int n_Paramet
         return result;
     }
     if(type == ACTIVATION_Tanh){
-        result.f = ReLU;
-        result.d_f = d_ReLU;
+        result.f = Tanh;
+        result.d_f = d_Tanh;
         result.n_Parameters = 0;
         result.Parameters = NULL;
 
         return result;
     }
     if(type == ACTIVATION_softmax){
-        result.f = ReLU;
-        result.d_f = d_ReLU;
+        result.f = softmax;
+        result.d_f = d_Softmax;
         result.n_Parameters = 0;
         result.Parameters = NULL;
 
@@ -111,7 +126,7 @@ void Sigmoid(const Matrix *mat, Matrix *result, float *Parameters){
     (void)Parameters;
     for(size_t i = 0; i < mat->n_rows; i++){
         for(size_t j = 0; j < mat->n_cols; j++){
-            float value = *At(result, i, j);
+            float value = *At(mat, i, j);
             *At(result, i, j) = 1/(1+exp(-value));
         }
     }
@@ -120,7 +135,7 @@ void d_Sigmoid(const Matrix *mat, Matrix *result, float *Parameters){
     (void)Parameters;
     for(size_t i = 0; i < mat->n_rows; i++){
         for(size_t j = 0; j < mat->n_cols; j++){
-            float value = *At(result, i, j);
+            float value = *At(mat, i, j);
             value = 1/(1+exp(-value));
             *At(result, i, j) = value*(1-value);
         }
@@ -131,7 +146,7 @@ void Tanh(const Matrix *mat, Matrix *result, float *Parameters){
     (void)Parameters;
     for(size_t i = 0; i < mat->n_rows; i++){
         for(size_t j = 0; j < mat->n_cols; j++){
-            *At(result, i, j) = tanh(*At(result, i, j));
+            *At(result, i, j) = tanh(*At(mat, i, j));
         }
     }
 }
@@ -139,7 +154,7 @@ void d_Tanh(const Matrix *mat, Matrix *result, float *Parameters){
     (void)Parameters;
     for(size_t i = 0; i < mat->n_rows; i++){
         for(size_t j = 0; j < mat->n_cols; j++){
-            float value = tanh(*At(result, i, j));
+            float value = tanh(*At(mat, i, j));
             *At(result, i, j) = 1 - (value*value);
         }
     }
@@ -186,6 +201,14 @@ void d_Softmax(const Matrix *mat, Matrix *result, float *Parameters){
             }
         }
     }
+}
+
+void Activate(
+    // activation function
+    // matrix
+
+){
+    // applies activaation
 }
 
 #endif

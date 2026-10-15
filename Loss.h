@@ -1,6 +1,25 @@
 #include <stdio.h>
 #include <math.h>
 #include "matrix.h"
+#ifndef LOSS_H
+#define LOSS_H
+
+// Loss functions prototype
+
+float Mean_Squared_Error(const Matrix *RealOutput, const Matrix *predictedOutput, float *Parameters);
+void d_Mean_Squared_Error(const Matrix *RealOutput, const Matrix *predictedOutput, Matrix *result, float *Parameters);
+float Mean_Absoult_Error(const Matrix *RealOutput, const Matrix *predictedOutput, float *Parameters);
+void d_Mean_Absoult_Error(const Matrix *RealOutput, const Matrix *predictedOutput, Matrix *result, float *Parameters);
+float Huber_Loss(const Matrix *RealOutput, const Matrix *predictedOutput, float *Parameters);
+void d_Huber_Loss(const Matrix *RealOutput, const Matrix *predictedOutput, Matrix *result, float *Parameters);
+float Binary_Cross_Entropy_Loss(const Matrix *RealOutput, const Matrix *predictedOutput, float *Parameters);
+void d_Binary_Cross_Entropy_Loss(const Matrix *RealOutput, const Matrix *predictedOutput, Matrix *result, float *Parameters);
+float Categorical_Cross_Entropy_Loss(const Matrix *RealOutput, const Matrix *predictedOutput, float *Parameters);
+void d_Categorical_Cross_Entropy_Loss(const Matrix *RealOutput, const Matrix *predictedOutput, Matrix *result, float *Parameters);
+float Sparse_Categorical_Cross_Entropy_Loss(const Matrix *RealOutput, const Matrix *predictedOutput, float *Parameters);
+void d_Sparse_Categorical_Cross_Entropy_Loss(const Matrix *RealOutput, const Matrix *predictedOutput, Matrix *result, float *Parameters);
+
+// Loss functions prototype
 
 const float eps = 1e-7;
 
@@ -27,7 +46,7 @@ typedef struct
     float *Parameters;
 }Loss;
 
-Loss_Type Activation_TypeOf(Loss *a){
+Loss_Type Loss_TypeOf(Loss *a){
     return a->type;
 }
 
@@ -275,7 +294,6 @@ void d_Categorical_Cross_Entropy_Loss(const Matrix *RealOutput, const Matrix *pr
         return;
     }
     int size = RealOutput->n_rows;
-    float result = 0;
     for(size_t i = 0; i < size; i++){
         for(size_t j = 0; j < RealOutput->n_cols; j++){
             if(*At(RealOutput, i, j) == 1){
@@ -346,7 +364,6 @@ void d_Sparse_Categorical_Cross_Entropy_Loss(const Matrix *RealOutput, const Mat
         return;
     }
     int size = RealOutput->n_rows;
-    float result = 0;
 
     for(size_t i = 0; i < size; i++){
         int index = (int)*At(RealOutput, i, 0);
@@ -368,9 +385,10 @@ void d_Sparse_Categorical_Cross_Entropy_Loss(const Matrix *RealOutput, const Mat
             p = 1.0 - eps;
         }
 
-        float error = -log(p);
         *At(result, i , index) = -1.0/(size*p);
     }
 
     return;
 }
+
+#endif
