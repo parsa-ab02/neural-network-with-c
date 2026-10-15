@@ -103,6 +103,32 @@ Loss New_Loss(Loss_Type type, float *Parameters, int n_Parameters){
     }
 }
 
+float Calculate_Loss(
+    const Loss *loss,
+    const Matrix *Real,
+    const Matrix *Predict
+){
+    if (loss == NULL || loss->f == NULL ||
+        Real == NULL || Predict == NULL) {
+        return 0.0;
+    }
+    return loss->f(Real, Predict, loss->Parameters);
+}
+
+void Calculate_Gradient_Loss(
+    const Loss *loss,
+    const Matrix *Real,
+    const Matrix *Predict,
+    Matrix *Result
+){
+    if (loss == NULL || loss->d_f == NULL ||
+        Real == NULL || Predict == NULL) {
+        return;
+    }
+    loss->d_f(Real, Predict, Result, loss->Parameters);
+    return;
+}
+
 float Mean_Squared_Error(const Matrix *RealOutput, const Matrix *predictedOutput, float *Parameters){
     if(Is_Null_Matrix(RealOutput) || Is_Null_Matrix(predictedOutput))return 0.0;
     if(!matrix_same_dimensions(RealOutput, predictedOutput))return 0.0;

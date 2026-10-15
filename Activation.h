@@ -4,7 +4,7 @@
 #ifndef ACTIVATION_H
 #define ACTIVATION_H
 
-// activtion functions prototype
+// activtion functions prototype =====================================
 
 void ReLU(const Matrix *mat, Matrix *result, float *Parameters);
 void d_ReLU(const Matrix *mat, Matrix *result, float *Parameters);
@@ -17,7 +17,7 @@ void d_Tanh(const Matrix *mat, Matrix *result, float *Parameters);
 void softmax(const Matrix *mat, Matrix *result, float *Parameters);
 void d_Softmax(const Matrix *mat, Matrix *result, float *Parameters);
 
-// activation functions prototype
+// structure class ====================================================
 
 typedef enum{
     ACTIVATION_ReLU,
@@ -87,6 +87,34 @@ Activation New_Activation(Activation_Type type, float *Parameters, int n_Paramet
         return result;
     }
 }
+
+void Activate(
+    const Activation *Act,
+    const Matrix *Input,
+    Matrix *Output
+){
+    if (Act == NULL || Act->f == NULL ||
+        Input == NULL || Output == NULL) {
+        return;
+    }
+    Act->f(Input, Output, Act->Parameters);
+    return;
+}
+
+void derivative_activate(
+    const Activation *Act,
+    const Matrix *Input,
+    Matrix *Output
+){
+    if (Act == NULL || Act->d_f == NULL ||
+        Input == NULL || Output == NULL) {
+        return;
+    }
+    Act->d_f(Input, Output, Act->Parameters);
+    return;
+}
+
+// activation functions implementation =================================
 
 void ReLU(const Matrix *mat, Matrix *result, float *Parameters){
     (void)Parameters;
@@ -201,14 +229,6 @@ void d_Softmax(const Matrix *mat, Matrix *result, float *Parameters){
             }
         }
     }
-}
-
-void Activate(
-    // activation function
-    // matrix
-
-){
-    // applies activaation
 }
 
 #endif
