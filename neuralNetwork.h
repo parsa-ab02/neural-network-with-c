@@ -1,120 +1,220 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include "matrix.h"
-#include "Activation.h"
 #ifndef NEURALNETWORK_H
 #define NEURALNETWORK_H
 
-typedef struct{
+#include <stdlib.h>
+
+#include "matrix.h"
+#include "Activation.h"
+
+typedef struct {
+    Matrix weight;
+    Matrix bias;
+
+    Matrix pre_activation;
+    Matrix post_activation;
+    Matrix delta_error;
+
+    Activation activation;
+} Layer;
+
+typedef struct {
     int n_layers;
-    int *Components;
-
-    Matrix *Layers_Weight;
-    Matrix *Layers_Bias;
-
-    Matrix *Pre_Activations;
-    Matrix *Activations;
-    Matrix *Delta_Errors;
-}Neural_Network;
+    Layer *layers;
+} Neural_Network;
 
 void Set_Random_Weights(Matrix *mat){
-    for(size_t i = 0; i < mat->n_rows; i++){
-        for(size_t j = 0; j < mat->n_cols; j++){
-            *At(mat, i, j) = rand() % 10;
+    if (mat == NULL || mat->Data == NULL) {
+        return;
+    }
+
+    for (int i = 0; i < mat->n_rows; i++) {
+        for (int j = 0; j < mat->n_cols; j++) {
+            *At(mat, i, j) = (float)(rand() % 10);
         }
     }
 }
 
-Neural_Network New_Neural_Nework(int n_layers, int *Components){
-    Neural_Network network;
+static void Destroy_Layer(Layer *layer){
+    if (layer == NULL) {
+        return;
+    }
+
+    destroy(&layer->weight);
+    destroy(&layer->bias);
+    destroy(&layer->pre_activation);
+    destroy(&layer->post_activation);
+    destroy(&layer->delta_error);
+
+    layer->activation.f = NULL;
+    layer->activation.d_f = NULL;
+    layer->activation.Parameters = NULL;
+    layer->activation.n_Parameters = 0;
+}
+
+static int Initialize_Layer(
+    Layer *layer,
+    int input_size,
+    int output_size,
+    const Activation *activation
+){
+    if (layer == NULL || input_size <= 0 || output_size <= 0) {
+        return 0;
+    }
+
+    layer->weight = New_Matrix(output_size, input_size);
+    layer->bias = New_Matrix(output_size, 1);
+    layer->pre_activation = New_Matrix(output_size, 1);
+    layer->post_activation = New_Matrix(output_size, 1);
+    layer->delta_error = New_Matrix(output_size, 1);
+
+    if (Is_Null_Matrix(&layer->weight) ||
+        Is_Null_Matrix(&layer->bias) ||
+        Is_Null_Matrix(&layer->pre_activation) ||
+        Is_Null_Matrix(&layer->post_activation) ||
+        Is_Null_Matrix(&layer->delta_error)) {
+        Destroy_Layer(layer);
+        return 0;
+    }
+
+    layer->activation = activation != NULL
+        ? *activation
+        : New_Activation(ACTIVATION_ReLU, NULL, 0);
+
+    if (layer->activation.f == NULL || layer->activation.d_f == NULL) {
+        Destroy_Layer(layer);
+        return 0;
+    }
+
+    Set_Random_Weights(&layer->weight);
+    Set_Random_Weights(&layer->bias);
+    return 1;
+}
+
+/*
+ * components contains n_layers + 1 entries:
+ * input size, followed by the size of each computational layer.
+ * activations may be NULL; ReLU is used for every layer in that case.
+ */
+Neural_Network New_Neural_Network(
+    int n_layers,
+    const int *components,
+    const Activation *activations
+){
+    Neural_Network network = {0, NULL};
+
+    if (n_layers <= 0 || components == NULL) {
+        return network;
+    }
+
+    network.layers = calloc((size_t)n_layers, sizeof(*network.layers));
+    if (network.layers == NULL) {
+        return network;
+    }
+
+    for (int i = 0; i < n_layers; i++) {
+        const Activation *activation = activations != NULL
+            ? &activations[i]
+            : NULL;
+
+        if (!Initialize_Layer(
+                &network.layers[i],
+                components[i],
+                components[i + 1],
+                activation)) {
+            for (int j = 0; j <= i; j++) {
+                Destroy_Layer(&network.layers[j]);
+            }
+            free(network.layers);
+            network.layers = NULL;
+            return network;
+        }
+    }
 
     network.n_layers = n_layers;
-    network.Components = Components;
-    
-    network.Layers_Weight = malloc(n_layers * sizeof(Matrix));
-    network.Layers_Bias = malloc(n_layers * sizeof(Matrix));
-
-    network.Pre_Activations = malloc(n_layers * sizeof(Matrix));
-    network.Activations = malloc(n_layers * sizeof(Matrix));
-    network.Delta_Errors = malloc(n_layers * sizeof(Matrix));
-
-    for(size_t i = 1; i < network.n_layers; i++){
-        network.Layers_Weight[i] = New_Matrix(network.Components[i], network.Components[i-1]);
-        network.Layers_Bias[i] = New_Matrix(network.Components[i], 1);
-
-        network.Pre_Activations[i] = New_Matrix(network.Components[i], 1);
-        network.Activations[i] = New_Matrix(network.Components[i], 1);
-        // if(network.activation != softmax){
-        //     network.Delta_Errors[i] = New_Matrix(network.Components[i], 1);
-        // }else{
-        //     network.Delta_Errors[i] = New_Matrix(network.Components[i], network.Components[i]);
-        // }
-
-        Set_Random_Weights(&network.Layers_Weight[i]);
-        Set_Random_Weights(&network.Layers_Bias[i]);
-    }
     return network;
 }
 
-void Destroy_network(Neural_Network *network){
-    for(size_t i = 1; i < network->n_layers; i++){
-        destroy(&network->Layers_Weight[i]);
-        destroy(&network->Layers_Bias[i]);
-
-        destroy(&network->Pre_Activations[i]);
-        destroy(&network->Activations[i]);
-        destroy(&network->Delta_Errors[i]);
+void Destroy_Neural_Network(Neural_Network *network){
+    if (network == NULL) {
+        return;
     }
 
-    free(network->Layers_Weight);
-    free(network->Layers_Bias);
+    for (int i = 0; i < network->n_layers; i++) {
+        Destroy_Layer(&network->layers[i]);
+    }
 
-    free(network->Pre_Activations);
-    free(network->Activations);
-    free(network->Delta_Errors);
-
-    network->Layers_Weight = NULL;
-    network->Layers_Bias = NULL;
+    free(network->layers);
+    network->layers = NULL;
     network->n_layers = 0;
-
-    free(network->Components);
 }
 
 int Largest_Component(const Neural_Network *network){
-    int Max = network->Components[1];
-    for(size_t i = 0; i < network->n_layers; i++){
-        if(network->Components[i] > Max) Max = network->Components[i];
+    if (network == NULL || network->layers == NULL || network->n_layers <= 0) {
+        return 0;
     }
-    return Max;
+
+    int largest = network->layers[0].weight.n_cols;
+    for (int i = 0; i < network->n_layers; i++) {
+        if (network->layers[i].weight.n_rows > largest) {
+            largest = network->layers[i].weight.n_rows;
+        }
+    }
+    return largest;
 }
 
-void Linear_Transformation(const Matrix *Input, Matrix *Output, const Matrix *Weights, const Matrix *Bias){
-    Multiplication(Weights, Input, Output);
-    Addition(Output, Bias, Output);
-    return;
+void Linear_Transformation(
+    const Matrix *input,
+    Matrix *output,
+    const Matrix *weights,
+    const Matrix *bias
+){
+    if (input == NULL || output == NULL || weights == NULL || bias == NULL) {
+        return;
+    }
+
+    Multiplication(weights, input, output);
+    Addition(output, bias, output);
 }
 
-void Forward_Propagation(const Neural_Network *network,Matrix *matrix){
-    network->Pre_Activations[0] = *matrix;
+int Forward_Propagation(
+    Neural_Network *network,
+    const Matrix *input
+){
+    if (network == NULL || network->layers == NULL ||
+        input == NULL || network->n_layers <= 0) {
+        return 0;
+    }
 
-    for(size_t i = 1; i < network->n_layers; i++){
+    const Matrix *current = input;
+
+    for (int i = 0; i < network->n_layers; i++) {
+        Layer *layer = &network->layers[i];
+
+        if (current->n_rows != layer->weight.n_cols || current->n_cols != 1) {
+            return 0;
+        }
+
         Linear_Transformation(
-            &network->Pre_Activations[i-1],
-            &network->Pre_Activations[i],
-            &network->Layers_Weight[i],
-            &network->Layers_Bias[i]
+            current,
+            &layer->pre_activation,
+            &layer->weight,
+            &layer->bias
         );
 
-        // if(network->Activation_functions[i].f != softmax){
-        //     Matrix_Activation(&network->Pre_Activations[i], &network->Activations[i], network->Activation_functions->f);
-        // }else{
-        //     softmax(&network->Pre_Activations[i], &network->Activations[i]);
-        // }
+        Activate(
+            &layer->activation,
+            &layer->pre_activation,
+            &layer->post_activation
+        );
+
+        current = &layer->post_activation;
     }
-    return;
+
+    return 1;
 }
 
-void Back_Propagation(const Neural_Network *network){
+void Back_Propagation(Neural_Network *network){
+    (void)network;
 }
 
 #endif
