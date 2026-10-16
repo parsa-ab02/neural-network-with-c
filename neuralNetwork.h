@@ -5,6 +5,7 @@
 
 #include "matrix.h"
 #include "Activation.h"
+#include "Loss.h"
 
 typedef struct {
     Matrix weight;
@@ -90,11 +91,35 @@ static int Initialize_Layer(
     return 1;
 }
 
-/*
- * components contains n_layers + 1 entries:
- * input size, followed by the size of each computational layer.
- * activations may be NULL; ReLU is used for every layer in that case.
- */
+static int Apply_Layer_Derivative(Layer *layer){
+    if (layer == NULL) {
+        return 0;
+    }
+
+    Matrix derivative = New_Matrix(
+        layer->pre_activation.n_rows,
+        layer->pre_activation.n_cols
+    );
+    if (Is_Null_Matrix(&derivative)) {
+        return 0;
+    }
+
+    derivative_activate(
+        &layer->activation,
+        &layer->pre_activation,
+        &derivative
+    );
+
+    for (int i = 0; i < layer->delta_error.n_rows; i++) {
+        for (int j = 0; j < layer->delta_error.n_cols; j++) {
+            *At(&layer->delta_error, i, j) *= *At(&derivative, i, j);
+        }
+    }
+
+    destroy(&derivative);
+    return 1;
+}
+
 Neural_Network New_Neural_Network(
     int n_layers,
     const int *components,
@@ -213,8 +238,88 @@ int Forward_Propagation(
     return 1;
 }
 
-void Back_Propagation(Neural_Network *network){
-    (void)network;
+int Back_Propagation(
+    Neural_Network *network,
+    const Matrix *input,
+    const Matrix *target,
+    const Loss *loss,
+    float learning_rate
+){
+    if (network == NULL || network->layers == NULL ||
+        input == NULL || target == NULL || loss == NULL || loss->d_f == NULL ||
+        network->n_layers <= 0 || learning_rate < 0.0f) {
+        return 0;
+    }
+
+    for (int i = 0; i < network->n_layers; i++) {
+        if (network->layers[i].activation.type == ACTIVATION_softmax) {
+            return 0;
+        }
+    }
+
+    Layer *output_layer = &network->layers[network->n_layers - 1];
+
+    if (target->n_rows != output_layer->post_activation.n_rows ||
+        target->n_cols != output_layer->post_activation.n_cols) {
+        return 0;
+    }
+
+    for (int i = 0; i < output_layer->delta_error.n_rows; i++) {
+        for (int j = 0; j < output_layer->delta_error.n_cols; j++) {
+            *At(&output_layer->delta_error, i, j) = 0.0f;
+        }
+    }
+    loss->d_f(
+        target,
+        &output_layer->post_activation,
+        &output_layer->delta_error,
+        loss->Parameters
+    );
+
+    if (!Apply_Layer_Derivative(output_layer)) {
+        return 0;
+    }
+
+    for (int layer_index = network->n_layers - 1;
+         layer_index >= 0;
+         layer_index--) {
+        Layer *layer = &network->layers[layer_index];
+        const Matrix *previous_activation = layer_index == 0
+            ? input
+            : &network->layers[layer_index - 1].post_activation;
+
+        if (layer_index > 0) {
+            Layer *previous_layer = &network->layers[layer_index - 1];
+
+            for (int col = 0; col < layer->weight.n_cols; col++) {
+                float sum = 0.0f;
+                for (int row = 0; row < layer->weight.n_rows; row++) {
+                    sum += *At(&layer->weight, row, col) *
+                           *At(&layer->delta_error, row, 0);
+                }
+                *At(&previous_layer->delta_error, col, 0) = sum;
+            }
+
+            if (!Apply_Layer_Derivative(previous_layer)) {
+                return 0;
+            }
+        }
+
+        for (int row = 0; row < layer->weight.n_rows; row++) {
+            for (int col = 0; col < layer->weight.n_cols; col++) {
+                *At(&layer->weight, row, col) -= learning_rate *
+                    *At(&layer->delta_error, row, 0) *
+                    *At(previous_activation, col, 0);
+            }
+        }
+
+        for (int row = 0; row < layer->bias.n_rows; row++) {
+            *At(&layer->bias, row, 0) -= learning_rate *
+                *At(&layer->delta_error, row, 0);
+        }
+    }
+
+    return 1;
 }
 
 #endif
